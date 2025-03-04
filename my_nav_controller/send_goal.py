@@ -75,13 +75,16 @@ class NavigationClient(Node):
         self.current_goal_handle = goal_handle
         self.get_logger().info("导航目标已被接受，开始导航")
         self.is_navigating = True  # 进入导航状态
-        
+        self.buff = 0.1  #修的bug
         # 监听导航任务完成情况
         result_future = goal_handle.get_result_async()
         result_future.add_done_callback(self.goal_result_callback)
 
     def goal_result_callback(self, future):
         """处理导航完成或失败"""
+        if self.buff == 1:
+            self.buff = 0
+            return
         status = future.result().status
         if status == GoalStatus.STATUS_SUCCEEDED:
             self.get_logger().info("导航成功到达目标点")
@@ -95,7 +98,7 @@ class NavigationClient(Node):
         """取消当前导航"""
         if self.current_goal_handle is None:
             return  # 没有目标，不需要取消
-
+        self.buff = 1
         cancel_future = self.current_goal_handle.cancel_goal_async()
         cancel_future.add_done_callback(self.cancel_done_callback)
 
